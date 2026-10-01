@@ -1,0 +1,6 @@
+{
+  "name": "Exam Command Center",
+  "description": "Mobile-first exam period productivity dashboard for Electrical Engineering students to master revision, study sessions, past questions, and disciplined daily habits.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
