@@ -50,24 +50,19 @@ app.get('/api/health', (_req, res) => {
 
 // Endpoint: Analyze PDF / Academic Material
 app.post('/api/study-lab/analyze', async (req, res) => {
-  try {
-    const { courseCode, courseTitle, fileName, pdfBase64, extractedText } = req.body;
+  const { courseCode, courseTitle, fileName, pdfBase64, extractedText } = req.body || {};
 
-    if (!courseCode || !fileName) {
-      return res.status(400).json({ error: 'courseCode and fileName are required' });
-    }
-
-    // Default structure generator if no AI key or if AI fails
-    const generateFallbackAnalysis = (reason?: string) => {
-      const code = courseCode || 'EEE 300';
-      const title = courseTitle || 'Electrical Engineering';
-      return {
-        id: `mat-${Date.now()}`,
-        courseCode: code,
-        courseTitle: title,
-        fileName: fileName,
-        fileSizeFormatted: pdfBase64 ? `${(pdfBase64.length * 0.75 / (1024 * 1024)).toFixed(1)} MB` : '1.8 MB',
-        pageCount: 16,
+  // Default structure generator if no AI key or if AI fails
+  const generateFallbackAnalysis = (reason?: string) => {
+    const code = courseCode || 'EEE 300';
+    const title = courseTitle || 'Electrical Engineering';
+    return {
+      id: `mat-${Date.now()}`,
+      courseCode: code,
+      courseTitle: title,
+      fileName: fileName || 'Academic_Notes.pdf',
+      fileSizeFormatted: pdfBase64 ? `${(pdfBase64.length * 0.75 / (1024 * 1024)).toFixed(1)} MB` : '1.8 MB',
+      pageCount: 16,
         uploadedAt: new Date().toISOString(),
         status: 'processed',
         weakAreasIdentified: [
@@ -260,7 +255,12 @@ app.post('/api/study-lab/analyze', async (req, res) => {
       };
     };
 
-    if (!ai) {
+    if (!courseCode || !fileName) {
+      return res.status(400).json({ error: 'courseCode and fileName are required' });
+    }
+
+    try {
+      if (!ai) {
       console.warn('GEMINI_API_KEY not found in environment, using curriculum generator');
       const fallback = generateFallbackAnalysis('no_api_key');
       return res.json({ success: true, material: fallback });
@@ -461,67 +461,8 @@ Include at least 4 topics, 4 definitions, 4 formulas, 2 worked examples, 6 flash
 
     return res.json({ success: true, material: materialResult });
   } catch (error: any) {
-    console.error('Error in /api/study-lab/analyze:', error);
-    // Graceful fallback to guarantee UI always succeeds
-    const fallback = {
-      id: `mat-${Date.now()}`,
-      courseCode: req.body?.courseCode || 'EEE 356',
-      courseTitle: req.body?.courseTitle || 'Electrical Engineering',
-      fileName: req.body?.fileName || 'Academic Material.pdf',
-      fileSizeFormatted: '2.5 MB',
-      pageCount: 20,
-      uploadedAt: new Date().toISOString(),
-      status: 'processed',
-      weakAreasIdentified: ['Circuit Analysis', 'Frequency Response'],
-      notesData: {
-        summary: `Exam preparation notes for ${req.body?.courseCode || 'Course'} extracted from ${req.body?.fileName || 'material'}.`,
-        keyTakeaways: [
-          'Master fundamental circuit theorems and parameter relationships.',
-          'Double check calculation units and negative feedback polarities.',
-          'Review past exam questions for recurring question archetypes.',
-        ],
-        topics: [
-          {
-            id: 't-1',
-            title: 'Core Fundamentals & Small Signal Models',
-            subtopics: ['Analysis Steps', 'Equivalents'],
-            keyConcepts: ['Gain calculation', 'Impedance matching'],
-            examSignificance: 'Very High',
-          },
-        ],
-        definitions: [
-          {
-            id: 'd-1',
-            term: 'Parameter Verification',
-            definition: 'Ensuring small-signal values conform to physical limits.',
-            examContext: 'Tested in exam definitions.',
-          },
-        ],
-        formulas: [
-          {
-            id: 'f-1',
-            name: 'Standard Gain Relation',
-            equation: 'Av = -gm * (Rc || RL)',
-            description: 'Calculates inverting voltage gain.',
-            parameters: ['gm: transconductance', 'Rc: collector load'],
-            examTip: 'Remember phase inversion sign.',
-          },
-        ],
-        principles: [],
-        examPitfalls: [],
-        workedExamples: [],
-      },
-      flashcards: [],
-      quizData: [],
-      mockExam: {
-        id: `mock-${Date.now()}`,
-        title: 'Mock Examination',
-        durationMinutes: 30,
-        totalMarks: 50,
-        instructions: ['Answer all questions.'],
-        questions: [],
-      },
-    };
+    console.error('Error in /api/study-lab/analyze, using curriculum fallback:', error);
+    const fallback = generateFallbackAnalysis(error?.message);
     return res.json({ success: true, material: fallback });
   }
 });
