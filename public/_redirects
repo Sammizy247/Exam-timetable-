@@ -1,0 +1,6 @@
+# API routes to Netlify Functions
+/api/study-ai  /.netlify/functions/study-ai  200
+/api/*         /.netlify/functions/:splat    200
+
+# SPA fallback rule for client-side routing
+/*             /index.html                   200
