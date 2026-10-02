@@ -3,6 +3,9 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
 
+// Explicitly disable HMR in dev server to prevent WebSocket connection errors in sandbox
+process.env.DISABLE_HMR = 'true';
+
 dotenv.config();
 
 const app = express();
@@ -616,7 +619,12 @@ async function startServer() {
   } else {
     const { createServer } = await import('vite');
     const vite = await createServer({
-      server: { middlewareMode: true, host: '0.0.0.0', port: Number(port) },
+      server: {
+        middlewareMode: true,
+        host: '0.0.0.0',
+        port: Number(port),
+        hmr: false,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
