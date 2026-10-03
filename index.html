@@ -21,7 +21,68 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-[#F8F8F8] dark:bg-[#0F0F0F] text-[#171717] dark:text-[#FFFFFF] antialiased selection:bg-[#D32F2F] selection:text-white font-sans">
-    <div id="root"></div>
+    <div id="root">
+      <div id="app-initial-loader" style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #0F0F0F; color: #FFFFFF; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; padding: 20px; box-sizing: border-box; text-align: center;">
+        <div style="width: 44px; height: 44px; border-radius: 50%; border: 3px solid rgba(211, 47, 47, 0.2); border-top-color: #D32F2F; animation: ecc-spin 0.8s linear infinite;"></div>
+        <div style="margin-top: 18px; font-weight: 800; font-size: 15px; letter-spacing: 0.04em;">EXAM COMMAND CENTER</div>
+        <div style="margin-top: 6px; font-size: 12px; color: #9CA3AF;">Loading dashboard & study lab...</div>
+
+        <!-- Auto-recovery notice if browser has stale cached files -->
+        <div id="ecc-cache-recovery" style="display: none; margin-top: 24px; padding: 16px; background-color: #171717; border: 1px solid #262626; border-radius: 12px; max-width: 320px;">
+          <p style="margin: 0 0 12px 0; font-size: 12px; color: #D1D5DB; line-height: 1.4;">
+            Stuck on loading? Your browser might have cached an older version.
+          </p>
+          <button onclick="window.__clearCacheAndReload()" style="width: 100%; padding: 10px 14px; background-color: #D32F2F; color: #FFFFFF; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">
+            Clear Stale Cache & Reload
+          </button>
+        </div>
+      </div>
+      <style>
+        @keyframes ecc-spin { to { transform: rotate(360deg); } }
+      </style>
+    </div>
+
+    <script>
+      // Global cache recovery function
+      window.__clearCacheAndReload = function() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let reg of registrations) {
+              reg.unregister();
+            }
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (let name of names) {
+              caches.delete(name);
+            }
+          });
+        }
+        setTimeout(function() {
+          window.location.reload(true);
+        }, 200);
+      };
+
+      // Show recovery button if app takes longer than 3.5 seconds to mount
+      setTimeout(function() {
+        var loader = document.getElementById('app-initial-loader');
+        var recovery = document.getElementById('ecc-cache-recovery');
+        if (loader && recovery) {
+          recovery.style.display = 'block';
+        }
+      }, 3500);
+
+      // Catch any fatal pre-mount script loading errors
+      window.addEventListener('error', function(e) {
+        var loader = document.getElementById('app-initial-loader');
+        var recovery = document.getElementById('ecc-cache-recovery');
+        if (loader && recovery) {
+          recovery.style.display = 'block';
+        }
+      });
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
